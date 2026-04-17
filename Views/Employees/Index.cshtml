@@ -1,0 +1,184 @@
+﻿@model IEnumerable<Rota.Models.Shift>
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+
+@{
+    ViewData["Title"] = "My Schedule";
+
+    var user = await UserManager.GetUserAsync(User);
+
+    var now = DateTime.Today;
+    var startOfWeek = now.AddDays(-(int)now.DayOfWeek + (int)DayOfWeek.Monday);
+    var endOfWeek = startOfWeek.AddDays(7);
+
+    var startOfMonth = new DateTime(now.Year, now.Month, 1);
+    var endOfMonth = startOfMonth.AddMonths(1);
+
+    var weeklyShifts = Model
+        .Where(s => s.StartTime >= startOfWeek && s.StartTime < endOfWeek)
+        .OrderBy(s => s.StartTime)
+        .ToList();
+
+    var monthlyShifts = Model
+        .Where(s => s.StartTime >= startOfMonth && s.StartTime < endOfMonth)
+        .ToList();
+
+    double totalWeekMinutes = weeklyShifts.Sum(s => (s.EndTime - s.StartTime).TotalMinutes);
+    int totalWeekHours = (int)totalWeekMinutes / 60;
+    int totalWeekMins = (int)totalWeekMinutes % 60;
+
+    double totalMonthMinutes = monthlyShifts.Sum(s => (s.EndTime - s.StartTime).TotalMinutes);
+    int totalMonthHours = (int)totalMonthMinutes / 60;
+    int totalMonthMins = (int)totalMonthMinutes % 60;
+
+    // 🧠 Simulated dynamic target — can later be pulled from database
+    int monthlyTargetHours = user?.UserName == "Tom@gamil.com" ? 140 : 160;
+
+    int progressPercent = (int)Math.Min(100, (totalMonthMinutes / 60) / (double)monthlyTargetHours * 100);
+
+    string progressColor = progressPercent switch
+    {
+        >= 80 => "bg-success",
+        >= 60 => "bg-warning text-dark",
+        _ => "bg-danger"
+    };
+
+    var assignments = ViewBag.Assignments as List<Rota.Models.ShiftAssignment> ?? new();
+}
+
+<div class="container px-4 mt-4">
+    <!-- 🗓 My Schedule -->
+    <h2 class="fw-bold text-primary mb-4">
+        <i class="bi bi-calendar-week me-2"></i>My Schedule (This Week)
+    </h2>
+
+    @if (!weeklyShifts.Any())
+    {
+        <div class="alert alert-info shadow-sm">
+            <i class="bi bi-info-circle me-2"></i>No shifts scheduled for this week.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive mb-4">
+            <table class="table table-bordered bg-white shadow-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Day</th>
+                        <th>Shift</th>
+                        <th>Time</th>
+                        <th>Location</th>
+                        <th>Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var shift in weeklyShifts)
+                    {
+                        var day = shift.StartTime.ToString("dddd, dd MMM");
+                        var time = $"{shift.StartTime:HH:mm} – {shift.EndTime:HH:mm}";
+                        var duration = shift.EndTime - shift.StartTime;
+                        var shiftHours = (int)duration.TotalMinutes / 60;
+                        var shiftMins = (int)duration.TotalMinutes % 60;
+
+                        <tr>
+                            <td class="fw-bold">@day</td>
+                            <td><span class="badge bg-primary px-3 py-2">@shift.Name</span></td>
+                            <td>@time</td>
+                            <td>@shift.Location</td>
+                            <td><strong>@shiftHours</strong>h <strong>@shiftMins</strong>m</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- ⏱ Total Hours Summary + Progress -->
+    <div class="bg-white border rounded shadow-sm p-4 mb-5">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-hourglass-split fs-1 text-primary me-3"></i>
+            <div class="w-100">
+                <h5 class="fw-bold mb-3 text-dark">Total Hours This Week</h5>
+                <p class="fs-5 mb-3 text-dark">
+                    <strong>@totalWeekHours</strong>h <strong>@totalWeekMins</strong>m
+                </p>
+                <h5 class="fw-bold mb-2 text-dark">Total Hours This Month</h5>
+                <p class="fs-5 text-dark mb-3">
+                    <strong>@totalMonthHours</strong>h <strong>@totalMonthMins</strong>m
+                </p>
+
+                <!-- 🔵 Monthly Progress Bar -->
+                <div class="mb-1 d-flex justify-content-between small text-muted">
+                    <span>Progress toward @monthlyTargetHours hrs</span>
+                    <span>@progressPercent%</span>
+                </div>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar @progressColor" role="progressbar" style="width: @progressPercent%;" aria-valuenow="@progressPercent" aria-valuemin="0" aria-valuemax="100">
+                        @progressPercent%
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 👥 My Rota Section -->
+    <h4 class="fw-bold text-dark mb-3">
+        <i class="bi bi-people-fill me-2"></i>My Rota (This Week)
+    </h4>
+
+    @if (!weeklyShifts.Any())
+    {
+        <div class="alert alert-info shadow-sm">
+            <i class="bi bi-info-circle me-2"></i>No rota shifts found for this week.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered bg-white shadow-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Day</th>
+                        <th>Shift</th>
+                        <th>Time</th>
+                        <th>Location</th>
+                        <th>Staff Working With Me</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var shift in weeklyShifts)
+                    {
+                        var day = shift.StartTime.ToString("dddd, dd MMM");
+                        var time = $"{shift.StartTime:HH:mm} – {shift.EndTime:HH:mm}";
+                        var teammates = assignments
+                        .Where(a => a.ShiftId == shift.Id && a.User != null)
+                        .Select(a => a.User.UserName)
+                        .ToList();
+
+                        <tr>
+                            <td class="fw-bold">@day</td>
+                            <td><span class="badge bg-secondary px-3 py-2">@shift.Name</span></td>
+                            <td>@time</td>
+                            <td>@shift.Location</td>
+                            <td>
+                                @if (teammates.Any())
+                                {
+                                    <ul class="mb-0 ps-3 small">
+                                        @foreach (var userName in teammates)
+                                        {
+                                            <li><i class="bi bi-person-circle me-1 text-primary"></i>@userName</li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">No staff assigned</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

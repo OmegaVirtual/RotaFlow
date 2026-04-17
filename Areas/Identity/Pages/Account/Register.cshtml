@@ -1,0 +1,76 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="col-md-6 animate__animated animate__fadeIn">
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="card shadow-lg border-0 p-4">
+            <h2 class="text-center mb-4 text-white"
+                style="background: linear-gradient(90deg, #1f1c2c, #928dab); padding: 1rem; border-radius: .5rem;">
+                <i class="bi bi-person-plus-fill me-2"></i>Create a new account
+            </h2>
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+            <!-- ✅ Full Name -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.FullName" class="form-control" placeholder="John Doe" />
+                <label asp-for="Input.FullName">Full Name</label>
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+
+            <!-- ✅ Date of Birth -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.DateOfBirth" class="form-control" type="date" placeholder="Date of Birth" />
+                <label asp-for="Input.DateOfBirth">Date of Birth</label>
+                <span asp-validation-for="Input.DateOfBirth" class="text-danger"></span>
+            </div>
+
+            <!-- ✅ Restaurant Name -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.RestaurantName" class="form-control" placeholder="Restaurant Name" />
+                <label asp-for="Input.RestaurantName">Restaurant Name</label>
+                <span asp-validation-for="Input.RestaurantName" class="text-danger"></span>
+            </div>
+
+            <!-- Email -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                <label asp-for="Input.Email">Email</label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <!-- Password -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label asp-for="Input.Password">Password</label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="form-floating mb-3">
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <!-- Registration Code -->
+            <div class="form-floating mb-4">
+                <input asp-for="Input.RegistrationCode" class="form-control" placeholder="Enter code e.g. 1234" />
+                <label asp-for="Input.RegistrationCode">Registration Code</label>
+                <span asp-validation-for="Input.RegistrationCode" class="text-danger"></span>
+            </div>
+
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg text-white"
+                    style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                <i class="bi bi-check-circle me-1"></i> Register
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

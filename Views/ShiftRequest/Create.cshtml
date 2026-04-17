@@ -1,0 +1,77 @@
+﻿@model Rota.Models.Requests.ShiftRequest
+@{
+    ViewData["Title"] = "New Shift Request";
+}
+
+<style>
+    body {
+        background-color: #f4f6f9;
+    }
+</style>
+
+<div class="container pt-5 mt-3">
+    <!-- Pushes content below navbar -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            @if (TempData["Message"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Message"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-white" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i> Submit a New Shift Request
+                    </h4>
+                </div>
+                <div class="card-body bg-white">
+                    <form asp-action="Create" method="post" novalidate>
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger mb-3" })
+
+                        <div class="mb-3">
+                            <label asp-for="Type" class="form-label fw-semibold">
+                                <i class="bi bi-list-task me-1 text-primary"></i>Request Type
+                            </label>
+                            <select asp-for="Type" class="form-select">
+                                <option value="ExtraShift">Request Extra Shift</option>
+                                <option value="ShiftSwap">Shift Swap</option>
+                            </select>
+                            <span asp-validation-for="Type" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ShiftDate" class="form-label fw-semibold">
+                                <i class="bi bi-calendar-event me-1 text-success"></i>Shift Date
+                            </label>
+                            <input asp-for="ShiftDate" class="form-control" type="datetime-local" />
+                            <span asp-validation-for="ShiftDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Details" class="form-label fw-semibold">
+                                <i class="bi bi-chat-left-text me-1 text-secondary"></i>Additional Details
+                            </label>
+                            <textarea asp-for="Details" class="form-control" rows="3" placeholder="Add any comments, context, or special notes here..."></textarea>
+                            <span asp-validation-for="Details" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="bi bi-send me-1"></i>Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

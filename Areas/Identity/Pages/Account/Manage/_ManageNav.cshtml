@@ -1,0 +1,47 @@
+﻿@inject SignInManager<IdentityUser> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+
+<style>
+    .manage-nav {
+        background: linear-gradient(90deg, #1f1c2c, #928dab);
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        animation: fadeInLeft 0.8s ease-in-out;
+    }
+
+    .manage-nav .nav-link {
+        color: #fff !important;
+        font-size: 1.1rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 0.75rem;
+        transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .manage-nav .nav-link:hover {
+        background-color: #ffc107;
+        color: #1f1c2c !important;
+        transform: translateX(5px);
+    }
+
+    @@keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+</style>
+
+<ul class="nav nav-pills flex-column manage-nav animate__animated animate__fadeInLeft">
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)" asp-page="./Index">
+            <i class="bi bi-person-circle me-2 fs-5"></i> Profile
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)" asp-page="./Settings">
+            <i class="bi bi-gear-fill me-2 fs-5"></i> Settings
+        </a>
+    </li>
+</ul>

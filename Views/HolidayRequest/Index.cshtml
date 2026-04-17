@@ -1,0 +1,94 @@
+﻿@model IEnumerable<Rota.Models.Requests.HolidayRequest>
+@{
+    ViewData["Title"] = "My Holiday Requests";
+}
+
+<div class="container mt-5 pt-4">
+    <!-- Header and Button -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h2 class="text-info fw-bold mb-2 mb-md-0">
+            <i class="bi bi-suitcase2-fill me-2"></i>My Holiday Requests
+        </h2>
+        <a asp-action="Create" class="btn btn-outline-info shadow-sm">
+            <i class="bi bi-calendar-plus me-1"></i> New Holiday Request
+        </a>
+    </div>
+
+    <!-- Holiday Balance Info -->
+    @if (ViewBag.Balance != null)
+    {
+        var bal = (Rota.Models.Requests.UserHolidayBalance)ViewBag.Balance;
+
+        <div class="alert alert-light border-start border-4 border-info shadow-sm fade show mb-4">
+            <i class="bi bi-calendar-check-fill me-2 text-primary fs-5"></i>
+            <strong>Holiday Balance:</strong> 
+            <span class="text-dark">@bal.UsedDays</span> of 
+            <span class="fw-bold text-success">@bal.AnnualAllowance</span> days used.
+            <span class="ms-2 badge bg-secondary">
+                @(bal.AnnualAllowance - bal.UsedDays) days left
+            </span>
+        </div>
+    }
+
+    <!-- Requests Table -->
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info shadow-sm text-center">
+            <i class="bi bi-info-circle me-2"></i> You haven’t submitted any holiday requests yet.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td>@request.StartDate.ToString("dd MMM yyyy")</td>
+                                <td>@request.EndDate.ToString("dd MMM yyyy")</td>
+                                <td>@(string.IsNullOrWhiteSpace(request.Reason) ? "-" : request.Reason)</td>
+                                <td>
+                                    <span class="badge 
+                                        @(request.Status == Rota.Models.Requests.HolidayStatus.Approved ? "bg-success" : 
+                                          request.Status == Rota.Models.Requests.HolidayStatus.Rejected ? "bg-danger" : "bg-secondary")">
+                                        @request.Status
+                                    </span>
+                                </td>
+                                <td>@request.SubmittedAt.ToString("dd MMM yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Optional Fade-In Animation -->
+<style>
+    .fade.show {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

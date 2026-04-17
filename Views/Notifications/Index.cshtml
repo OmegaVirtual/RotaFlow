@@ -1,0 +1,77 @@
+﻿@model IEnumerable<Rota.Models.Notifications.Notification>
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out both;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .notification-card {
+        transition: background 0.3s ease;
+    }
+
+    .notification-card.unread {
+        background-color: #f0f8ff;
+    }
+</style>
+
+<div class="container pt-5 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold">
+            <i class="bi bi-bell-fill me-2"></i>Notifications
+        </h2>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info shadow-sm fade-in text-center">
+            <i class="bi bi-info-circle me-2"></i> You have no notifications.
+        </div>
+    }
+    else
+    {
+        <div class="fade-in">
+            @foreach (var note in Model)
+            {
+                <div class="card shadow-sm border-0 mb-3 notification-card @(note.IsRead ? "" : "unread")">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 fw-semibold text-dark">
+                                <i class="bi bi-chat-left-text me-2 text-secondary"></i>
+                                @note.Message
+                            </p>
+                            <small class="text-muted">@note.CreatedAt.ToString("dd MMM yyyy HH:mm")</small>
+                        </div>
+
+                        @if (!note.IsRead)
+                        {
+                            <form asp-action="MarkRead" asp-controller="Notifications" method="post">
+                                <input type="hidden" name="id" value="@note.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-success shadow-sm">
+                                    <i class="bi bi-check2-circle me-1"></i>Mark as Read
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary"><i class="bi bi-check2-all me-1"></i> Read</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

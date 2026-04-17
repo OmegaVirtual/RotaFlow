@@ -1,0 +1,220 @@
+﻿@model List<Rota.Models.ViewModels.WeeklyShiftInputModel>
+@using Microsoft.AspNetCore.Identity
+@using Rota.Data
+@inject ApplicationDbContext _context
+
+@{
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@Html.Raw(TempData["Success"])</div>
+    }
+    @if (TempData["HolidayConflicts"] != null)
+    {
+        <div class="alert alert-warning">@TempData["HolidayConflicts"]</div>
+    }
+
+    ViewData["Title"] = "Create Weekly Rota";
+    var today = DateTime.Today;
+    var monday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
+    var users = ViewBag.Users as List<IdentityUser> ?? new();
+    var roles = ViewBag.UserRoles as Dictionary<string, string> ?? new();
+    var holidays = ViewBag.ApprovedHolidays as Dictionary<string, List<DateTime>> ?? new();
+    var profiles = _context.UserProfiles.ToDictionary(p => p.UserId, p => p.FullName);
+    var shiftNames = new[] { "Lunch", "Dinner" };
+    var startTimes = new Dictionary<string, string> { { "Lunch", "10:00" }, { "Dinner", "13:00" } };
+    var endTimes = new Dictionary<string, string> { { "Lunch", "18:00" }, { "Dinner", "23:30" } };
+    var shiftIndex = 0;
+}
+
+<style>
+    .form-control, .form-select {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .table td, .table th {
+        vertical-align: middle;
+        padding: 0.3rem;
+    }
+
+    .assign-box {
+        max-height: 75px;
+        overflow-y: auto;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(90deg, #1f1c2c, #928dab);
+        border: none;
+        color: white;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(90deg, #1a1828, #857fa0);
+            color: white;
+        }
+
+    .table td span.text-muted {
+        font-size: 0.75rem;
+    }
+
+    .holiday-warning {
+        color: #999;
+        text-decoration: line-through;
+    }
+</style>
+
+<div class="container px-2 px-md-3 mt-2 mb-4 animate__animated animate__fadeInUp">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-gradient mb-0">
+            <i class="bi bi-calendar2-week me-2"></i> Create Weekly Rota
+        </h5>
+        <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3 py-1" onclick="autoAssignShifts()">
+            <i class="bi bi-magic me-1"></i> Auto-Assign Staff
+        </button>
+    </div>
+
+    <form asp-action="CreateWeeklyConfirmed" method="post" id="rotaForm">
+        <div class="mb-2 row">
+            <label for="weekStart" class="col-sm-3 col-form-label fw-semibold">Week Starting</label>
+            <div class="col-sm-5">
+                <input type="date" id="weekStart" name="WeekStartDate" class="form-control" value="@monday.ToString("yyyy-MM-dd")" required onchange="updateDates()" />
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered bg-white shadow-sm align-middle" id="rotaTable">
+                <thead class="table-light text-center">
+                    <tr>
+                        <th>Day</th>
+                        <th>Shift</th>
+                        <th>Location</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Assign Staff</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        foreach (var shiftName in shiftNames)
+                        {
+                            var modelIndex = shiftIndex++;
+                            var currentDate = monday.AddDays(i);
+                            <tr id="row-@modelIndex" data-day="@i" data-shift="@shiftName">
+                                <td class="fw-bold text-nowrap" id="dayLabel-@modelIndex">
+                                    @currentDate.ToString("ddd, dd MMM") - @shiftName
+                                    <input type="hidden" name="[@modelIndex].StartTimeDateOnly" id="date-@modelIndex" value="@currentDate.ToString("yyyy-MM-dd")" />
+                                    <input type="hidden" name="[@modelIndex].Name" id="name-@modelIndex" value="@shiftName" />
+                                </td>
+                                <td>@shiftName</td>
+                                <td>
+                                    <input type="hidden" name="[@modelIndex].Location" value="Penny Blue" />
+                                    <span class="text-muted">Penny Blue</span>
+                                </td>
+                                <td>
+                                    <input type="time" name="[@modelIndex].StartTimeTimeOnly" class="form-control" value="@startTimes[shiftName]" required />
+                                </td>
+                                <td>
+                                    <input type="time" name="[@modelIndex].EndTimeTimeOnly" class="form-control" value="@endTimes[shiftName]" required />
+                                </td>
+                                <td style="max-width: 180px;">
+                                    <div class="border rounded p-1 assign-box" id="users-@modelIndex">
+                                        @foreach (var user in users)
+                                        {
+                                            var fullName = profiles.ContainsKey(user.Id) ? profiles[user.Id] : user.UserName;
+                                            var role = roles.ContainsKey(user.Id) ? roles[user.Id] : "Worker";
+                                            var isOnHoliday = holidays.ContainsKey(user.Id) && holidays[user.Id].Contains(currentDate);
+                                            <div class="form-check small">
+                                                <input class="form-check-input" type="checkbox" value="@user.Id" name="[@modelIndex].UserIds" id="chk-@modelIndex-@user.Id" data-role="@role" @(isOnHoliday ? "disabled" : "") />
+                                                <label class="form-check-label @(isOnHoliday ? "holiday-warning" : "")" for="chk-@modelIndex-@user.Id">
+                                                    <i class="bi bi-person-fill me-1 @(role == "Manager" ? "text-warning" : "text-primary")"></i>
+                                                    @fullName <small class="text-muted">(@role)</small>
+                                                    @(isOnHoliday ? " - On Holiday" : "")
+                                                </label>
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-end mt-2 pb-2">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 py-2">
+                <i class="bi bi-x-circle me-1"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-gradient btn-lg rounded-pill px-4 py-2">
+                <i class="bi bi-calendar-plus me-2"></i>Save Weekly Rota
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function updateDates() {
+            const weekStart = new Date(document.getElementById('weekStart').value);
+            const rows = document.querySelectorAll('#rotaTable tbody tr');
+            rows.forEach(row => {
+                const day = parseInt(row.dataset.day);
+                const shift = row.dataset.shift;
+                const modelIndex = row.id.replace('row-', '');
+                const currentDate = new Date(weekStart);
+                currentDate.setDate(currentDate.getDate() + day);
+                const dateString = currentDate.toISOString().split('T')[0];
+                const displayDate = currentDate.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+
+                document.getElementById(`dayLabel-${modelIndex}`).innerHTML = `${displayDate} - ${shift}` +
+                    `<input type='hidden' name='[${modelIndex}].Name' id='name-${modelIndex}' value='${shift}' />` +
+                    `<input type='hidden' name='[${modelIndex}].StartTimeDateOnly' id='date-${modelIndex}' value='${dateString}' />`;
+            });
+        }
+
+        function autoAssignShifts() {
+            const rows = document.querySelectorAll('#rotaTable tbody tr');
+            const users = Array.from(document.querySelectorAll('input[data-role="Worker"]:not(:disabled)')).map(cb => cb.value);
+            const staffSchedule = {};
+
+            users.forEach(userId => {
+                let days = [];
+                while (days.length < 5) {
+                    const day = Math.floor(Math.random() * 7);
+                    if (!days.includes(day)) days.push(day);
+                }
+                staffSchedule[userId] = days;
+            });
+
+            rows.forEach(row => {
+                const modelIndex = row.id.replace('row-', '');
+                const day = parseInt(row.dataset.day);
+                const shift = row.dataset.shift;
+
+                const box = document.getElementById(`users-${modelIndex}`);
+                const checkboxes = box.querySelectorAll('input[type="checkbox"]:not(:disabled)');
+
+                const managers = Array.from(checkboxes).filter(cb => cb.dataset.role === "Manager");
+                const workers = Array.from(checkboxes).filter(cb => cb.dataset.role === "Worker" && staffSchedule[cb.value]?.includes(day));
+
+                checkboxes.forEach(cb => cb.checked = false);
+
+                if (managers.length > 0) {
+                    const m = managers[Math.floor(Math.random() * managers.length)];
+                    m.checked = true;
+                }
+
+                const required = shift === "Lunch" ? 2 : 4;
+                const selected = new Set();
+                while (selected.size < Math.min(required, workers.length)) {
+                    const w = workers[Math.floor(Math.random() * workers.length)];
+                    selected.add(w);
+                }
+                selected.forEach(cb => cb.checked = true);
+            });
+        }
+
+        window.addEventListener('load', updateDates);
+    </script>
+}

@@ -1,0 +1,157 @@
+﻿@page
+@model Rota.Areas.Identity.Pages.Account.Manage.SettingsModel
+@{
+    ViewData["Title"] = "Settings";
+    ViewData["ActivePage"] = "Settings";
+}
+
+<style>
+    .settings-header {
+        background: linear-gradient(90deg, #1f1c2c, #928dab);
+        padding: 1rem;
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
+        color: white;
+    }
+
+    .settings-form-container {
+        margin-top: 40px;
+        margin-bottom: 40px;
+        animation: fadeInUp 0.5s ease-in-out;
+    }
+
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .settings-card {
+        border-radius: 1rem;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .nav-link.active {
+        background-color: #ffc107 !important;
+        color: #1f1c2c !important;
+    }
+
+    .toast-custom {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1080;
+        animation: fadeInDown 0.6s ease;
+    }
+
+    @@keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="container settings-form-container">
+    <div class="row">
+        <div class="col-md-9">
+
+            @if (!string.IsNullOrEmpty(Model.StatusMessage))
+            {
+                <div class="toast-custom alert alert-success alert-dismissible fade show shadow" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    @Model.StatusMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <!-- Change Email Form -->
+            <form method="post" asp-page-handler="ChangeEmail" class="card shadow-lg settings-card border-0">
+                <div class="settings-header text-center mb-3">
+                    <h4 class="mb-0"><i class="bi bi-envelope-fill me-2"></i>Change Email</h4>
+                </div>
+                <div class="px-4 pb-4">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" value="@User.Identity?.Name" readonly />
+                        <label>Current Email</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="EmailInput.NewEmail" name="EmailInput.NewEmail" class="form-control" placeholder="New email" />
+                        <label asp-for="EmailInput.NewEmail">New Email</label>
+                        <span asp-validation-for="EmailInput.NewEmail" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg text-white" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                        <i class="bi bi-check-circle me-1"></i>Update Email
+                    </button>
+                </div>
+            </form>
+
+            <!-- Change Password Form -->
+            <form method="post" asp-page-handler="ChangePassword" class="card shadow-lg settings-card border-0">
+                <div class="settings-header text-center mb-3">
+                    <h4 class="mb-0"><i class="bi bi-lock-fill me-2"></i>Change Password</h4>
+                </div>
+                <div class="px-4 pb-4">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="PasswordInput.OldPassword" name="PasswordInput.OldPassword" type="password" class="form-control" placeholder="Old password" />
+                        <label asp-for="PasswordInput.OldPassword">Current Password</label>
+                        <span asp-validation-for="PasswordInput.OldPassword" class="text-danger"></span>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="PasswordInput.NewPassword" name="PasswordInput.NewPassword" type="password" class="form-control" placeholder="New password" />
+                        <label asp-for="PasswordInput.NewPassword">New Password</label>
+                        <span asp-validation-for="PasswordInput.NewPassword" class="text-danger"></span>
+                    </div>
+                    <div class="form-floating mb-4">
+                        <input asp-for="PasswordInput.ConfirmPassword" name="PasswordInput.ConfirmPassword" type="password" class="form-control" placeholder="Confirm password" />
+                        <label asp-for="PasswordInput.ConfirmPassword">Confirm Password</label>
+                        <span asp-validation-for="PasswordInput.ConfirmPassword" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg text-white" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                        <i class="bi bi-key-fill me-1"></i>Update Password
+                    </button>
+                </div>
+            </form>
+
+            <!-- Upload Profile Image -->
+            <form method="post" enctype="multipart/form-data" asp-page-handler="UploadImage" class="card shadow-lg settings-card border-0">
+                <div class="settings-header text-center mb-3">
+                    <h4 class="mb-0"><i class="bi bi-image-fill me-2"></i>Profile Picture</h4>
+                </div>
+                <div class="px-4 pb-4">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Upload New Profile Picture</label>
+                        <input type="file" name="ProfileImage" class="form-control" accept="image/*" />
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg text-white" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                        <i class="bi bi-upload me-1"></i>Upload Picture
+                    </button>
+                </div>
+            </form>
+
+            <!-- Update Date of Birth -->
+            <form method="post" asp-page-handler="UpdateDob" class="card shadow-lg settings-card border-0">
+                <div class="settings-header text-center mb-3">
+                    <h4 class="mb-0"><i class="bi bi-calendar-event-fill me-2"></i>Update Date of Birth</h4>
+                </div>
+                <div class="px-4 pb-4">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="form-floating mb-3">
+                        <input asp-for="ProfileInput.DateOfBirth" name="ProfileInput.DateOfBirth" class="form-control" type="date" />
+                        <label asp-for="ProfileInput.DateOfBirth">Date of Birth</label>
+                        <span asp-validation-for="ProfileInput.DateOfBirth" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="w-100 btn btn-lg text-white" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                        <i class="bi bi-check-circle me-1"></i>Update Date of Birth
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

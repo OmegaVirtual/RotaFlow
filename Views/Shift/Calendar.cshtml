@@ -1,0 +1,144 @@
+﻿@model IEnumerable<Rota.Models.Shift>
+@inject Rota.Data.ApplicationDbContext DbContext
+@{
+    ViewData["Title"] = "Shift Schedule";
+    var currentTime = DateTime.Now;
+    var assignments = ViewBag.Assignments as List<Rota.Models.ShiftAssignment> ?? new();
+}
+
+<div class="container-fluid px-5 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold text-primary">📅 Shift Schedule</h1>
+
+        @if (User.IsInRole("Manager"))
+        {
+            <div class="d-flex gap-2">
+                <a asp-action="Create" class="btn btn-lg btn-success shadow-sm px-4 py-2">
+                    <i class="bi bi-plus-circle me-2"></i> Create New Shift
+                </a>
+                <a asp-controller="ShiftAssignment" asp-action="Create" class="btn btn-lg btn-outline-primary shadow-sm px-4 py-2">
+                    <i class="bi bi-person-plus me-2"></i> Assign Users
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center fs-5 py-4 animate__animated animate__fadeIn">
+            <i class="bi bi-info-circle me-2"></i>No shifts found. Click <strong>Create New Shift</strong> to add one.
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            @foreach (var shift in Model.OrderByDescending(s => s.StartTime))
+            {
+                var shiftUsers = assignments
+                .Where(a => a.ShiftId == shift.Id)
+                .Select(a =>
+                {
+                    var profile = DbContext.UserProfiles.FirstOrDefault(p => p.UserId == a.UserId);
+                    return profile?.FullName ?? a.User?.UserName;
+                })
+                .ToList();
+
+                <div class="col">
+                    <div class="card h-100 shadow-lg border-0 border-start border-5 border-primary animate__animated animate__fadeInUp">
+                        <div class="card-body">
+                            <h4 class="card-title text-primary mb-2">
+                                <i class="bi bi-clock-history me-2"></i>@shift.Name
+                            </h4>
+                            <p class="mb-2">
+                                <i class="bi bi-calendar-event-fill text-secondary"></i>
+                                <strong>@shift.StartTime.ToString("dddd, dd MMM yyyy • HH:mm")</strong><br />
+                                <i class="bi bi-arrow-down-up text-secondary"></i>
+                                <strong>@shift.EndTime.ToString("dddd, dd MMM yyyy • HH:mm")</strong>
+                            </p>
+                            <p class="mb-1">
+                                📍 <strong>@shift.Location</strong><br />
+                                👥 Required: <strong>@shift.RequiredStaff</strong>
+                            </p>
+                            @if (shiftUsers.Any())
+                            {
+                                <div class="mt-2 small text-muted">
+                                    <strong><i class="bi bi-people me-1"></i>Assigned:</strong>
+                                    <ul class="mb-0 ps-3">
+                                        @foreach (var user in shiftUsers)
+                                        {
+                                            <li><i class="bi bi-person-circle me-1 text-primary"></i>@user</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="small text-muted fst-italic">
+                                    <i class="bi bi-exclamation-circle me-1"></i>No users assigned
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(shift.Notes))
+                            {
+                                <p class="fst-italic small text-muted mb-0 mt-2">
+                                    <i class="bi bi-sticky me-1"></i>Note: @shift.Notes
+                                </p>
+                            }
+                        </div>
+                        <div class="card-footer bg-light d-flex justify-content-end gap-2 border-top">
+                            <a asp-action="Details" asp-route-id="@shift.Id" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye me-1"></i> View
+                            </a>
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@shift.Id" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-pencil-square me-1"></i> Edit
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@shift.Id" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- 🔹 FullCalendar Integration -->
+<div class="container-fluid px-5 mt-5">
+    <h2 class="fw-bold text-dark mb-3">🗓️ Calendar View</h2>
+    <div id="calendar"></div>
+</div>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                },
+                events: [
+        @foreach (var shift in Model)
+        {
+            <text>
+                        {
+                            title: '@shift.Name',
+                            start: '@shift.StartTime.ToString("yyyy-MM-ddTHH:mm")',
+                            end: '@shift.EndTime.ToString("yyyy-MM-ddTHH:mm")',
+                            description: '@shift.Location',
+                        },
+            </text>
+        }
+                                ]
+            });
+            calendar.render();
+        });
+    </script>
+}

@@ -1,0 +1,82 @@
+﻿@model Rota.Models.Requests.HolidayRequest
+
+@{
+    ViewData["Title"] = "Submit Holiday Request";
+    var holidayBalance = ViewBag.HolidayBalance?.ToString() ?? "Unknown";
+}
+
+<style>
+    body {
+        background-color: #f4f6f9;
+    }
+</style>
+
+<div class="container pt-5 mt-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            @if (TempData["Message"] != null)
+            {
+                var message = TempData["Message"].ToString();
+                bool isSuccess = message.StartsWith("✅");
+                <div class="alert @(isSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="bi @(isSuccess ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") me-2"></i>@message
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="alert alert-info shadow-sm">
+                <i class="bi bi-calendar-check-fill me-2"></i>
+                You have <strong>@holidayBalance</strong> holiday days remaining.
+            </div>
+
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-white" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="bi bi-calendar-plus me-2"></i> Submit a Holiday Request
+                    </h4>
+                </div>
+                <div class="card-body bg-white">
+                    <form asp-action="Create" method="post" novalidate>
+                        @Html.AntiForgeryToken()
+                        @Html.ValidationSummary(true, "", new { @class = "text-danger mb-3" })
+
+                        <div class="mb-3">
+                            <label asp-for="StartDate" class="form-label fw-semibold">
+                                <i class="bi bi-calendar-event me-1 text-primary"></i> Start Date
+                            </label>
+                            <input asp-for="StartDate" class="form-control" type="date" />
+                            <span asp-validation-for="StartDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="EndDate" class="form-label fw-semibold">
+                                <i class="bi bi-calendar-event me-1 text-danger"></i> End Date
+                            </label>
+                            <input asp-for="EndDate" class="form-control" type="date" />
+                            <span asp-validation-for="EndDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Reason" class="form-label fw-semibold">
+                                <i class="bi bi-chat-left-text me-1 text-secondary"></i> Reason
+                            </label>
+                            <textarea asp-for="Reason" class="form-control" rows="3" placeholder="Optional notes..."></textarea>
+                            <span asp-validation-for="Reason" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="bi bi-send me-1"></i>Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

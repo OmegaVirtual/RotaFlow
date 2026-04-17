@@ -1,0 +1,235 @@
+﻿@model IEnumerable<Rota.Models.Shift>
+@using Rota.Models
+@{
+    ViewData["Title"] = "Shift Schedule";
+    var assignments = ViewBag.Assignments as List<ShiftAssignment> ?? new();
+    var manualShifts = Model
+        .Where(s => string.IsNullOrWhiteSpace(s.Notes) || !s.Notes.ToLower().Contains("auto-generated"))
+        .OrderBy(s => s.StartTime)
+        .ToList();
+}
+
+<div class="container-fluid px-4 mt-4 animate__animated animate__fadeIn">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-5 fw-bold"
+            style="background: linear-gradient(90deg, #1f1c2c, #928dab); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            <i class="bi bi-calendar3-week me-2"></i> Shift Schedule
+        </h1>
+        <div class="d-flex flex-wrap gap-2">
+            @if (User.IsInRole("Manager"))
+            {
+                <a asp-action="Create" class="btn btn-gradient btn-lg shadow-sm">
+                    <i class="bi bi-plus-circle me-2"></i> New Shift Availability
+                </a>
+                <a asp-action="CreateWeekly" class="btn btn-outline-dark btn-lg shadow-sm">
+                    <i class="bi bi-calendar-range me-2"></i> Create Weekly Rota
+                </a>
+            }
+
+            <!-- View Weekly Rota visible to all -->
+            <a asp-action="WeeklyRota" class="btn btn-outline-secondary btn-lg shadow-sm">
+                <i class="bi bi-eye-fill me-2"></i> View Weekly Rota
+            </a>
+        </div>
+    </div>
+
+    <!-- Manual Shifts -->
+    @if (!manualShifts.Any())
+    {
+        <div class="alert alert-warning text-center fs-5 shadow-sm">
+            <i class="bi bi-exclamation-circle me-2"></i>No manually scheduled shifts.
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            @foreach (var shift in manualShifts)
+            {
+                var shiftUsers = assignments
+                .Where(a => a.ShiftId == shift.Id)
+                .Select(a => (a.User as ApplicationUser)?.FullName ?? a.User?.UserName)
+                .ToList();
+
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 border-start border-5 border-primary">
+                        <div class="card-body">
+                            <h4 class="text-primary mb-2">
+                                <i class="bi bi-clock-history me-2"></i>@shift.Name
+                            </h4>
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-calendar-event me-2"></i>@shift.StartTime.ToString("dddd, dd MMM yyyy • HH:mm")<br />
+                                <i class="bi bi-arrow-down-up me-2"></i>@shift.EndTime.ToString("dddd, dd MMM yyyy • HH:mm")
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-geo-alt-fill text-danger me-2"></i><strong>@shift.Location</strong><br />
+                                <i class="bi bi-people-fill text-secondary me-2"></i><strong>@shift.RequiredStaff</strong> staff required
+                            </p>
+                            @if (shiftUsers.Any())
+                            {
+                                <div class="mt-2 small text-muted">
+                                    <strong><i class="bi bi-people me-1"></i>Assigned:</strong>
+                                    <ul class="mb-0 ps-3">
+                                        @foreach (var name in shiftUsers)
+                                        {
+                                            <li><i class="bi bi-person-circle text-primary me-1"></i>@name</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted small fst-italic">No users assigned.</div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(shift.Notes))
+                            {
+                                <p class="fst-italic text-muted small mt-2">
+                                    <i class="bi bi-chat-left-text me-1"></i>@shift.Notes
+                                </p>
+                            }
+                        </div>
+                        <div class="card-footer bg-light d-flex justify-content-end gap-2">
+                            <a asp-action="Details" asp-route-id="@shift.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye me-1"></i> View
+                            </a>
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@shift.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil me-1"></i> Edit
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@shift.Id" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash me-1"></i> Delete
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Who's On Now -->
+<div class="container-fluid px-4 mt-4 pb-5 animate__animated animate__fadeInUp">
+    <h2 class="fw-bold mb-3"
+        style="background: linear-gradient(90deg, #1f1c2c, #928dab); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.5rem;">
+        <i class="bi bi-people-fill me-2"></i>Who’s On Shift Now
+    </h2>
+    <p class="text-muted small">
+        <i class="bi bi-clock me-1"></i>Current time: <strong id="currentTime"></strong>
+    </p>
+
+    @{
+        var now = DateTime.Now;
+        var activeShifts = Model.Where(s => s.StartTime <= now && s.EndTime > now).ToList();
+        var nextShift = Model.Where(s => s.StartTime > now).OrderBy(s => s.StartTime).FirstOrDefault();
+        var nextAssignedUsers = nextShift != null
+        ? assignments.Where(a => a.ShiftId == nextShift.Id).Select(a => (a.User as ApplicationUser)?.FullName ?? a.User?.UserName).ToList()
+        : new List<string>();
+    }
+
+    @if (!activeShifts.Any())
+    {
+        <div class="alert alert-info shadow-sm d-flex align-items-center p-3">
+            <i class="bi bi-info-circle-fill fs-4 me-3 text-info"></i>
+            <div style="font-size: 0.95rem;">
+                <strong>No one is currently on shift.</strong><br />
+                @if (nextShift != null)
+                {
+                    <div class="mt-2">
+                        Next shift: <strong>@nextShift.Name</strong><br />
+                        🕒 <strong>@nextShift.StartTime.ToString("f")</strong><br />
+                        📍 <strong>@nextShift.Location</strong><br />
+                        @if (nextAssignedUsers.Any())
+                        {
+                            <div class="mt-1">
+                                <strong>Assigned:</strong>
+                                <ul class="mb-0 ps-3">
+                                    @foreach (var user in nextAssignedUsers)
+                                    {
+                                        <li><i class="bi bi-person text-primary me-1"></i>@user</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="text-muted fst-italic">No users assigned.</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <span>No upcoming shifts scheduled.</span>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+            @foreach (var shift in activeShifts)
+            {
+                var assignedUsers = assignments
+                .Where(a => a.ShiftId == shift.Id)
+                .Select(a => (a.User as ApplicationUser)?.FullName ?? a.User?.UserName)
+                .ToList();
+
+                <div class="col">
+                    <div class="card border-success shadow-sm h-100">
+                        <div class="card-body p-3">
+                            <h6 class="text-success fw-bold">
+                                <i class="bi bi-lightning-charge-fill me-2"></i>@shift.Name
+                            </h6>
+                            <p class="small mb-2">
+                                🕒 <strong>@shift.StartTime.ToString("f") – @shift.EndTime.ToString("f")</strong><br />
+                                📍 <strong>@shift.Location</strong>
+                            </p>
+                            <strong>Assigned:</strong>
+                            @if (assignedUsers.Any())
+                            {
+                                <ul class="list-unstyled small mt-1 mb-0">
+                                    @foreach (var user in assignedUsers)
+                                    {
+                                        <li><i class="bi bi-person-check text-primary me-1"></i>@user</li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <div class="text-muted small fst-italic">No users assigned</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function updateCurrentTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long', year: 'numeric', month: 'long', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            };
+            document.getElementById('currentTime').textContent = now.toLocaleString('en-GB', options);
+        }
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+    </script>
+    <style>
+        .btn-gradient {
+            background: linear-gradient(90deg, #1f1c2c, #928dab);
+            color: #fff;
+            border: none;
+        }
+
+            .btn-gradient:hover {
+                background: linear-gradient(90deg, #1c1a27, #7f7a95);
+            }
+    </style>
+}

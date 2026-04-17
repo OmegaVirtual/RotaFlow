@@ -1,0 +1,67 @@
+﻿@{
+    ViewData["Title"] = "Welcome to Rota Organiser";
+}
+
+<!-- 🌟 Hero Section -->
+<div class="container py-5 text-center">
+    <h1 class="display-4 fw-bold mb-3 text-primary animate__animated animate__fadeInDown">
+        <i class="bi bi-calendar2-week-fill me-2"></i>Welcome to Rota Organiser
+    </h1>
+    <p class="lead text-muted animate__animated animate__fadeInUp animate__delay-1s">
+        Effortlessly manage staff shifts, assignments, and requests – all in one place.
+    </p>
+    <div class="mt-4 animate__animated animate__fadeInUp animate__delay-2s">
+        <a asp-controller="Shift" asp-action="Index" class="btn btn-lg btn-outline-primary me-3 shadow-sm">
+            <i class="bi bi-calendar-check-fill me-2"></i>View Shifts
+        </a>
+        <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-lg btn-primary shadow-sm">
+            <i class="bi bi-person-plus-fill me-2"></i>Get Started
+        </a>
+    </div>
+</div>
+
+<!-- 🔥 Features -->
+<div class="container py-5">
+    <div class="row text-center g-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 animate__animated animate__fadeInUp">
+                <div class="card-body">
+                    <i class="bi bi-people-fill display-4 text-primary mb-3"></i>
+                    <h5 class="fw-bold">Smart Staff Management</h5>
+                    <p class="text-muted">Assign shifts, manage availability, and communicate with your team.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="card-body">
+                    <i class="bi bi-clock-history display-4 text-success mb-3"></i>
+                    <h5 class="fw-bold">Real-Time Scheduling</h5>
+                    <p class="text-muted">View current and upcoming shifts, with a live overview of who’s on duty.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 animate__animated animate__fadeInUp animate__delay-2s">
+                <div class="card-body">
+                    <i class="bi bi-envelope-paper-fill display-4 text-danger mb-3"></i>
+                    <h5 class="fw-bold">Instant Notifications</h5>
+                    <p class="text-muted">In-APP notifications  and updates for shift assignments and requests.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✨ Footer Call-to-Action -->
+<div class="bg-light py-5 text-center">
+    <h4 class="mb-3 fw-bold text-dark">Ready to optimise your team’s workflow?</h4>
+    <a asp-controller="Shift" asp-action="Index" class="btn btn-primary btn-lg shadow-sm">
+        <i class="bi bi-play-circle-fill me-2"></i>Launch the Rota
+    </a>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+}

@@ -1,0 +1,86 @@
+﻿@model Rota.Models.ViewModels.ShiftAssignmentViewModel
+
+@{
+    ViewData["Title"] = "Assign User to Shift";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 animate__animated animate__fadeIn">
+            <div class="card shadow-lg border-0">
+                <div class="card-header text-white" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+                    <h4 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>Assign User to Shift</h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <!-- Shift Dropdown -->
+                        <div class="mb-3">
+                            <label asp-for="ShiftId" class="form-label">Select Shift</label>
+                            <select asp-for="ShiftId" class="form-select">
+                                <option value="">-- Select a shift --</option>
+                                @foreach (var shift in Model.Shifts.Where(s => s.Name == "Breakfast" || s.Name == "Lunch" || s.Name == "Dinner"))
+                                {
+                                    <option value="@shift.Id">@shift.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="ShiftId" class="text-danger"></span>
+                        </div>
+
+                        <!-- User Dropdown -->
+                        <div class="mb-3">
+                            <label asp-for="UserId" class="form-label">Select Worker</label>
+                            <select asp-for="UserId" class="form-select">
+                                <option value="">-- Select a user --</option>
+                                @foreach (var user in Model.Workers)
+                                {
+                                    var name = (user as Rota.Models.ApplicationUser)?.FullName ?? user.UserName;
+                                    <option value="@user.Id">@name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="UserId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a asp-controller="Shift" asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i> Back to Shifts
+                            </a>
+                            <button type="submit" class="btn btn-gradient">
+                                <i class="bi bi-check-circle me-1"></i> Assign User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    .btn-gradient {
+        background: linear-gradient(90deg, #1f1c2c, #928dab);
+        border: none;
+        color: white;
+    }
+
+        .btn-gradient:hover {
+            background: linear-gradient(90deg, #1c1a27, #7f7a95);
+            color: white;
+        }
+</style>

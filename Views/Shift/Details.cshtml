@@ -1,0 +1,85 @@
+﻿@model Rota.Models.Shift
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@{
+    ViewData["Title"] = "Shift Details";
+    var isManager = User.IsInRole("Manager");
+}
+
+<div class="container mt-5 animate__animated animate__fadeIn">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="text-primary mb-4">
+                <i class="bi bi-eye-fill me-2"></i> Shift Details
+            </h2>
+
+            @if (TempData["RequestMessage"] != null)
+            {
+                <div class="alert alert-success d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    @TempData["RequestMessage"]
+                </div>
+            }
+
+            <div class="card shadow border-0">
+                <div class="card-header bg-light d-flex align-items-center">
+                    <i class="bi bi-clock-history text-primary me-2"></i>
+                    <strong>@Model.Name</strong>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        <strong><i class="bi bi-calendar-event me-1"></i>Date & Time:</strong><br />
+                        <span class="text-muted">
+                            From: @Model.StartTime.ToString("dddd, dd MMM yyyy • HH:mm")<br />
+                            To: @Model.EndTime.ToString("dddd, dd MMM yyyy • HH:mm")
+                        </span>
+                    </p>
+
+                    <p class="mb-3">
+                        <strong><i class="bi bi-geo-alt me-1"></i>Location:</strong>
+                        <span class="text-muted">@Model.Location</span>
+                    </p>
+
+                    <p class="mb-3">
+                        <strong><i class="bi bi-people-fill me-1"></i>Required Staff:</strong>
+                        <span class="text-muted">@Model.RequiredStaff</span>
+                    </p>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                    {
+                        <p class="mb-3">
+                            <strong><i class="bi bi-stickies me-1"></i>Notes:</strong>
+                            <span class="text-muted">@Model.Notes</span>
+                        </p>
+                    }
+
+                    <div class="mt-4 d-flex justify-content-between flex-wrap gap-2">
+                        @if (isManager)
+                        {
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+                                <i class="bi bi-pencil-square me-1"></i> Edit
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                                <i class="bi bi-trash me-1"></i> Delete
+                            </a>
+                        }
+
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Back to List
+                        </a>
+
+                        @if (!isManager)
+                        {
+                            <form asp-action="RequestShift" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-envelope-paper-fill me-1"></i> Request This Shift
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

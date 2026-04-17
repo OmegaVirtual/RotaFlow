@@ -1,0 +1,212 @@
+﻿@model IEnumerable<Rota.Models.Requests.ShiftRequest>
+@{
+    ViewData["Title"] = "My Requests";
+    var holidayRequests = ViewBag.HolidayRequests as List<Rota.Models.Requests.HolidayRequest> ?? new();
+    var isManager = User.IsInRole("Manager");
+}
+
+<style>
+    .fade-in {
+        animation: fadeIn 0.6s ease-in-out both;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .request-type-header {
+        background-color: #f9fafb;
+        border-bottom: 2px solid #dee2e6;
+        padding: 1.25rem 1rem;
+        font-weight: 700;
+        font-size: 1.35rem;
+        color: #343a40;
+    }
+
+    .badge-pending {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .manager-comment-box {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+</style>
+
+<div class="container mt-5 pt-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold mb-2 mb-md-0">
+            <i class="bi bi-journal-text me-2"></i>@(isManager ? "All Requests" : "My Requests")
+        </h2>
+        <div class="d-flex gap-2">
+            <a asp-action="Create" class="btn btn-success shadow-sm">
+                <i class="bi bi-plus-circle me-1"></i> New Request
+            </a>
+            <a asp-controller="HolidayRequest" asp-action="Create" class="btn btn-outline-info shadow-sm">
+                <i class="bi bi-suitcase2-fill me-1"></i> Holiday Request
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any() && !holidayRequests.Any())
+    {
+        <div class="alert alert-info shadow-sm text-center fade-in">
+            <i class="bi bi-info-circle me-2"></i> No requests to show.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0 fade-in">
+            <div class="card-body p-0">
+
+                @if (Model.Any())
+                {
+                    <div class="request-type-header">
+                        <i class="bi bi-clock-history me-1 text-primary"></i>Shift Requests
+                    </div>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                @if (isManager)
+                                {
+                                    <th>User</th>
+                                }
+                                <th>Type</th>
+                                <th>Shift Date</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                                <th>Submitted</th>
+                                @if (isManager)
+                                {
+                                    <th>Actions</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var shift in Model)
+                            {
+                                <tr>
+                                    @if (isManager)
+                                    {
+                                        <td>@shift.User?.Email</td>
+                                    }
+                                    <td><strong>@shift.Type</strong></td>
+                                    <td>@shift.ShiftDate?.ToString("dd MMM yyyy HH:mm")</td>
+                                    <td>
+                                        <span class="badge @(shift.Status == Rota.Models.Requests.RequestStatus.Approved ? "bg-success" : shift.Status == Rota.Models.Requests.RequestStatus.Rejected ? "bg-danger" : "badge-pending")">
+                                            @shift.Status
+                                        </span>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(shift.Details) ? "-" : shift.Details)</td>
+                                    <td>@shift.SubmittedAt.ToString("dd MMM yyyy")</td>
+                                    @if (isManager)
+                                    {
+                                        <td>
+                                            @if (shift.Status == Rota.Models.Requests.RequestStatus.Pending)
+                                            {
+                                                <form asp-controller="ShiftRequest" asp-action="UpdateStatus" method="post" class="d-inline">
+                                                    <input type="hidden" name="id" value="@shift.Id" />
+                                                    <input type="hidden" name="status" value="Approved" />
+                                                    <button class="btn btn-success btn-sm mb-1">Approve</button>
+                                                </form>
+                                                <form asp-controller="ShiftRequest" asp-action="UpdateStatus" method="post" class="d-inline">
+                                                    <input type="hidden" name="id" value="@shift.Id" />
+                                                    <input type="hidden" name="status" value="Rejected" />
+                                                    <button class="btn btn-danger btn-sm mb-1">Decline</button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                @if (holidayRequests.Any())
+                {
+                    <div class="request-type-header">
+                        <i class="bi bi-suitcase2-fill me-1 text-info"></i>Holiday Requests
+                    </div>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                @if (isManager)
+                                {
+                                    <th>User</th>
+                                }
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                                <th>Submitted</th>
+                                @if (isManager)
+                                {
+                                    <th>Actions</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var holiday in holidayRequests)
+                            {
+                                <tr>
+                                    @if (isManager)
+                                    {
+                                        <td>@holiday.User?.Email</td>
+                                    }
+                                    <td>@holiday.StartDate.ToString("dd MMM yyyy")</td>
+                                    <td>@holiday.EndDate.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <span class="badge @(holiday.Status == Rota.Models.Requests.HolidayStatus.Approved ? "bg-success" : holiday.Status == Rota.Models.Requests.HolidayStatus.Rejected ? "bg-danger" : "badge-pending")">
+                                            @holiday.Status
+                                        </span>
+                                    </td>
+                                    <td>@(string.IsNullOrWhiteSpace(holiday.Reason) ? "-" : holiday.Reason)</td>
+                                    <td>@holiday.SubmittedAt.ToString("dd MMM yyyy")</td>
+                                    @if (isManager)
+                                    {
+                                        <td>
+                                            @if (holiday.Status == Rota.Models.Requests.HolidayStatus.Pending)
+                                            {
+                                                <form asp-controller="HolidayRequest" asp-action="UpdateStatus" method="post" class="mb-1">
+                                                    <textarea name="managerComment" class="form-control form-control-sm manager-comment-box" placeholder="Manager comment (optional)"></textarea>
+                                                    <input type="hidden" name="id" value="@holiday.Id" />
+                                                    <input type="hidden" name="status" value="Approved" />
+                                                    <button class="btn btn-success btn-sm me-1">Approve</button>
+                                                </form>
+                                                <form asp-controller="HolidayRequest" asp-action="UpdateStatus" method="post">
+                                                    <textarea name="managerComment" class="form-control form-control-sm manager-comment-box" placeholder="Manager comment (optional)"></textarea>
+                                                    <input type="hidden" name="id" value="@holiday.Id" />
+                                                    <input type="hidden" name="status" value="Rejected" />
+                                                    <button class="btn btn-danger btn-sm me-1">Decline</button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">—</span>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+</div>
